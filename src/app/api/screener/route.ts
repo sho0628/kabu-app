@@ -7,6 +7,10 @@ import {
 } from "@/lib/providers";
 import { DEFAULT_CRITERIA, screenStocks } from "@/lib/screener";
 
+// Vercel等のサーバーレスで Yahoo 取得が時間切れにならないよう上限を延長。
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 // バリュー株スクリーニング結果を返す。
 // GET /api/screener?market=ALL&maxPer=15&maxPbr=1.5&minDividendYield=2.5&minRoe=8
 export async function GET(req: Request) {

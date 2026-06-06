@@ -8,6 +8,19 @@
 
 > ⚠️ 本アプリは投資助言ではありません。表示データにはサンプル/非公式データを含みます。投資判断はご自身の責任で行ってください。
 
+## 🚀 公開URLで確認する（Vercel・無料）
+
+GitHubアカウントがあれば、下のボタンから数クリックで公開URL（`https://....vercel.app`）を作れます。スマホからも確認できます。
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/sho0628/kabu-app/tree/claude/stock-trading-webapp-fsIjM&project-name=kabu-app&repository-name=kabu-app)
+
+手順:
+1. 上のボタンを押す → Vercelにログイン（GitHubでOK）
+2. そのまま **Deploy** を押すだけ（環境変数の設定は不要。既定でYahooのライブデータを取得）
+3. 1〜2分で `https://kabu-app-xxxx.vercel.app` が発行されます
+
+> デプロイ元はこの開発ブランチ `claude/stock-trading-webapp-fsIjM` です。`main` にマージ済みの場合はそちらを選んでも構いません。
+
 ## 技術スタック
 
 - [Next.js 16](https://nextjs.org/) (App Router) + TypeScript

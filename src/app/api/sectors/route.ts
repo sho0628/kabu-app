@@ -7,6 +7,10 @@ import {
 } from "@/lib/providers";
 import { aggregateSectors } from "@/lib/sectors";
 
+// Vercel等のサーバーレスで Yahoo 取得が時間切れにならないよう上限を延長。
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 // セクター別の集計と構成銘柄を返す。
 // GET /api/sectors?market=US|JP|ALL
 export async function GET(req: Request) {

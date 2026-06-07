@@ -10,16 +10,20 @@
 
 ## 🚀 公開URLで確認する（Vercel・無料）
 
-GitHubアカウントがあれば、下のボタンから数クリックで公開URL（`https://....vercel.app`）を作れます。スマホからも確認できます。
+GitHubアカウントがあれば、数クリックで公開URL（`https://....vercel.app`）を作れます。スマホからも確認できます。
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/sho0628/kabu-app/tree/claude/stock-trading-webapp-fsIjM&project-name=kabu-app&repository-name=kabu-app)
+> このリポジトリが**プライベート（非公開）**の場合は「Deploy（複製）」ボタンは使えません。代わりに以下の**「自分のリポジトリをImport」**する手順を使ってください（プライベートのままでOK）。
 
-手順:
-1. 上のボタンを押す → Vercelにログイン（GitHubでOK）
-2. そのまま **Deploy** を押すだけ（環境変数の設定は不要。既定でYahooのライブデータを取得）
-3. 1〜2分で `https://kabu-app-xxxx.vercel.app` が発行されます
+1. [vercel.com/new](https://vercel.com/new) を開く → GitHubでログイン
+2. **Import Git Repository** の一覧から **`kabu-app`** を選ぶ
+   - 出てこない場合は **「Adjust GitHub App Permissions / Configure GitHub App」** からVercelに `kabu-app` へのアクセスを許可
+3. `kabu-app` の **Import** を押す
+4. Branch を **`claude/stock-trading-webapp-fsIjM`** に設定（環境変数の設定は不要。既定でYahooのライブデータを取得）
+5. **Deploy** を押す → 1〜2分で `https://kabu-app-xxxx.vercel.app` が発行されます
 
-> デプロイ元はこの開発ブランチ `claude/stock-trading-webapp-fsIjM` です。`main` にマージ済みの場合はそちらを選んでも構いません。
+> リポジトリを**公開（Public）**にしている場合は、下のボタンからの複製でもOKです。
+>
+> [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/sho0628/kabu-app/tree/claude/stock-trading-webapp-fsIjM&project-name=kabu-app&repository-name=kabu-app)
 
 ## 技術スタック
 

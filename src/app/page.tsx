@@ -2,21 +2,23 @@
 
 import { useEffect, useState } from "react";
 import type { ProviderStatus } from "@/lib/providers";
-import type { SectorStat, Stock } from "@/lib/types";
+import type { GroupBy, GroupStat, Stock } from "@/lib/types";
 import { MarketToggle, type MarketFilter } from "@/components/MarketToggle";
 import { SectorHeatmap } from "@/components/SectorHeatmap";
 import { fmtPct } from "@/lib/format";
 
 interface SectorsResponse {
   market: MarketFilter;
+  group: GroupBy;
   asOf: string;
   provider: ProviderStatus;
-  sectors: SectorStat[];
+  groups: GroupStat[];
   stocks: Stock[];
 }
 
 export default function DashboardPage() {
   const [market, setMarket] = useState<MarketFilter>("ALL");
+  const [group, setGroup] = useState<GroupBy>("sector");
   const [data, setData] = useState<SectorsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export default function DashboardPage() {
       setLoading(true);
       setError(null);
       try {
-        const r = await fetch(`/api/sectors?market=${market}`);
+        const r = await fetch(`/api/sectors?market=${market}&group=${group}`);
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const json: SectorsResponse = await r.json();
         if (!cancelled) setData(json);
@@ -41,10 +43,10 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [market]);
+  }, [market, group]);
 
   const maxScore =
-    data?.sectors.reduce((m, s) => Math.max(m, Math.abs(s.moneyFlowScore)), 0) ?? 1;
+    data?.groups.reduce((m, s) => Math.max(m, Math.abs(s.moneyFlowScore)), 0) ?? 1;
 
   return (
     <div className="space-y-6">
@@ -52,10 +54,35 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold">セクター資金流入マップ</h1>
           <p className="text-sm text-[var(--muted)] mt-1">
-            時価総額加重の騰落率と売買代金から、資金が集まっているセクターを可視化します。
+            時価総額加重の騰落率と売買代金から、資金が集まっている分野を可視化します。
           </p>
         </div>
         <MarketToggle value={market} onChange={setMarket} />
+      </div>
+
+      {/* 粒度切替: 大分類(セクター) / 細分類(業種) */}
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="text-sm text-[var(--muted)]">粒度:</span>
+        <div className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1">
+          {(
+            [
+              { v: "sector", label: "大分類 (11セクター)" },
+              { v: "industry", label: "細分類 (業種)" },
+            ] as const
+          ).map((o) => (
+            <button
+              key={o.v}
+              onClick={() => setGroup(o.v)}
+              className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+                group === o.v
+                  ? "bg-[var(--accent)] text-white"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {data && (
@@ -81,14 +108,18 @@ export default function DashboardPage() {
         <>
           {/* 資金流入ランキング */}
           <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
-            <h2 className="font-semibold mb-3">資金流入ランキング</h2>
+            <h2 className="font-semibold mb-3">
+              資金流入ランキング（{group === "industry" ? "業種別" : "セクター別"}）
+            </h2>
             <div className="space-y-2">
-              {data.sectors.map((s, i) => {
+              {data.groups.map((s, i) => {
                 const w = (Math.abs(s.moneyFlowScore) / maxScore) * 100;
                 const positive = s.moneyFlowScore >= 0;
                 return (
-                  <div key={`${s.sector}-${i}`} className="flex items-center gap-3">
-                    <span className="w-28 shrink-0 text-sm">{s.sector}</span>
+                  <div key={`${s.name}-${i}`} className="flex items-center gap-3">
+                    <span className="w-36 shrink-0 text-sm truncate" title={s.name}>
+                      {s.name}
+                    </span>
                     <div className="flex-1 h-5 bg-[var(--background)] rounded overflow-hidden relative">
                       <div
                         className="h-full rounded"
@@ -118,7 +149,7 @@ export default function DashboardPage() {
               </h2>
               <Legend />
             </div>
-            <SectorHeatmap sectors={data.sectors} stocks={data.stocks} />
+            <SectorHeatmap groups={data.groups} stocks={data.stocks} level={group} />
           </section>
         </>
       )}

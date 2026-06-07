@@ -97,6 +97,8 @@ export async function fetchJQuantsStocks(): Promise<Stock[]> {
         name: info.CompanyName,
         market: "JP",
         sector: SECTOR_MAP[info.Sector17CodeName ?? ""] ?? "資本財",
+        // J-Quantsの17業種区分をそのまま細分類ラベルとして使用
+        industry: info.Sector17CodeName ?? "その他",
         price: close,
         changePct,
         volume: latest.Volume ?? 0,

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/", label: "セクター資金流入" },
   { href: "/screener", label: "バリュー株スクリーナー" },
+  { href: "/watchlist", label: "⭐ ウォッチリスト" },
 ];
 
 export function Nav() {

@@ -1,25 +1,29 @@
-import type { Market, SectorStat, Stock } from "@/lib/types";
+import type { GroupBy, GroupStat, Market, Stock } from "@/lib/types";
 
-// 銘柄群をセクター別に集計する。
-// - avgChangePct: 時価総額加重の平均騰落率(セクターの値動き)
+// 銘柄群を指定の粒度(セクター大分類 or 業種細分類)で集計する。
+// - avgChangePct: 時価総額加重の平均騰落率(グループの値動き)
 // - tradedValue 相当: price × volume の合計(売買代金 = 資金の動きの代理指標)
 // - moneyFlowScore: 騰落率と売買代金回転率を掛け合わせた資金流入スコア
-export function aggregateSectors(
+export function aggregateGroups(
   stocks: Stock[],
-  market: Market | "ALL"
-): SectorStat[] {
+  market: Market | "ALL",
+  level: GroupBy = "sector"
+): GroupStat[] {
   const filtered =
     market === "ALL" ? stocks : stocks.filter((s) => s.market === market);
 
+  const keyOf = (s: Stock) => (level === "industry" ? s.industry : s.sector);
+
   const groups = new Map<string, Stock[]>();
   for (const s of filtered) {
-    const arr = groups.get(s.sector) ?? [];
+    const k = keyOf(s);
+    const arr = groups.get(k) ?? [];
     arr.push(s);
-    groups.set(s.sector, arr);
+    groups.set(k, arr);
   }
 
-  const stats: SectorStat[] = [];
-  for (const [sector, members] of groups) {
+  const stats: GroupStat[] = [];
+  for (const [name, members] of groups) {
     const totalMarketCap = members.reduce((sum, s) => sum + s.marketCap, 0);
     const totalVolume = members.reduce((sum, s) => sum + s.volume, 0);
 
@@ -32,13 +36,15 @@ export function aggregateSectors(
 
     // 売買代金(=資金の流れの大きさ)と回転率(売買代金/時価総額)
     const tradedValue = members.reduce((sum, s) => sum + s.price * s.volume, 0);
-    const turnover = totalMarketCap > 0 ? tradedValue / (totalMarketCap * 1_000_000) : 0;
+    const turnover =
+      totalMarketCap > 0 ? tradedValue / (totalMarketCap * 1_000_000) : 0;
 
     // 資金流入スコア: 値上がり × 活発さ。プラスほど資金流入の傾向。
     const moneyFlowScore = avgChangePct * (1 + Math.min(turnover, 1));
 
     stats.push({
-      sector: sector as SectorStat["sector"],
+      name,
+      level,
       market,
       avgChangePct: round(avgChangePct, 2),
       totalMarketCap,
@@ -48,7 +54,7 @@ export function aggregateSectors(
     });
   }
 
-  // 資金流入スコアの降順(資金が集まっているセクターが上)
+  // 資金流入スコアの降順(資金が集まっているグループが上)
   return stats.sort((a, b) => b.moneyFlowScore - a.moneyFlowScore);
 }
 

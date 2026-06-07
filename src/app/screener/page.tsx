@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import type { ProviderStatus } from "@/lib/providers";
 import type { ScreenedStock, ScreenerCriteria } from "@/lib/types";
+import Link from "next/link";
 import { MarketToggle, type MarketFilter } from "@/components/MarketToggle";
+import { StarButton } from "@/lib/watchlist";
 import { fmtMarketCap, fmtMultiple, fmtPct, fmtPrice } from "@/lib/format";
 
 interface ScreenerResponse {
@@ -87,6 +89,7 @@ export default function ScreenerPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[var(--surface)] text-[var(--muted)] text-left">
+              <th className="px-3 py-2 font-medium w-8"></th>
               <th className="px-3 py-2 font-medium">スコア</th>
               <th className="px-3 py-2 font-medium">銘柄</th>
               <th className="px-3 py-2 font-medium text-right">株価</th>
@@ -101,14 +104,14 @@ export default function ScreenerPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={9} className="px-3 py-10 text-center text-[var(--muted)]">
+                <td colSpan={10} className="px-3 py-10 text-center text-[var(--muted)]">
                   読み込み中…
                 </td>
               </tr>
             )}
             {!loading && data?.results.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-10 text-center text-[var(--muted)]">
+                <td colSpan={10} className="px-3 py-10 text-center text-[var(--muted)]">
                   条件に合う銘柄がありません。条件を緩めてみてください。
                 </td>
               </tr>
@@ -120,13 +123,21 @@ export default function ScreenerPage() {
                   className="border-t border-[var(--border)] hover:bg-[var(--surface)]"
                 >
                   <td className="px-3 py-2">
+                    <StarButton ticker={s.ticker} />
+                  </td>
+                  <td className="px-3 py-2">
                     <ScoreBadge score={s.valueScore} />
                   </td>
                   <td className="px-3 py-2">
-                    <div className="font-semibold">{s.name}</div>
-                    <div className="text-[var(--muted)] text-xs font-mono">
-                      {s.ticker} · {s.sector}
-                    </div>
+                    <Link
+                      href={`/stock/${encodeURIComponent(s.ticker)}`}
+                      className="hover:underline"
+                    >
+                      <div className="font-semibold">{s.name}</div>
+                      <div className="text-[var(--muted)] text-xs font-mono">
+                        {s.ticker} · {s.industry}
+                      </div>
+                    </Link>
                   </td>
                   <td className="px-3 py-2 text-right font-mono">
                     {fmtPrice(s.price, s.market)}

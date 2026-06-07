@@ -1,23 +1,25 @@
 import { NextResponse } from "next/server";
-import type { Market } from "@/lib/types";
+import type { GroupBy, Market } from "@/lib/types";
 import {
   getAllStocks,
   getStocksForMarket,
   statusFromResults,
 } from "@/lib/providers";
-import { aggregateSectors } from "@/lib/sectors";
+import { aggregateGroups } from "@/lib/sectors";
 
 // Vercel等のサーバーレスで Yahoo 取得が時間切れにならないよう上限を延長。
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-// セクター別の集計と構成銘柄を返す。
-// GET /api/sectors?market=US|JP|ALL
+// セクター/業種別の集計と構成銘柄を返す。
+// GET /api/sectors?market=US|JP|ALL&group=sector|industry
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const marketParam = (searchParams.get("market") ?? "ALL").toUpperCase();
   const market: Market | "ALL" =
     marketParam === "US" || marketParam === "JP" ? (marketParam as Market) : "ALL";
+  const group: GroupBy =
+    searchParams.get("group") === "industry" ? "industry" : "sector";
 
   let stocks;
   let provider;
@@ -34,13 +36,14 @@ export async function GET(req: Request) {
         : statusFromResults(undefined, res);
   }
 
-  const sectors = aggregateSectors(stocks, market);
+  const groups = aggregateGroups(stocks, market, group);
 
   return NextResponse.json({
     market,
+    group,
     asOf: new Date().toISOString(),
     provider,
-    sectors,
+    groups,
     stocks,
   });
 }

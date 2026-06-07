@@ -1,4 +1,5 @@
 import type { Sector, Stock } from "@/lib/types";
+import { jpIndustry } from "@/lib/data/industryMap";
 
 // =============================================================
 // Finnhub プロバイダ(米国株) — 無料枠: 60リクエスト/分
@@ -78,6 +79,7 @@ async function fetchOne(symbol: string, token: string): Promise<Stock | null> {
       name: profile.name ?? symbol,
       market: "US",
       sector,
+      industry: jpIndustry(profile.finnhubIndustry),
       price: quote.c,
       changePct: quote.dp ?? 0,
       volume: Math.round((m["10DayAverageTradingVolume"] ?? 0) * 1_000_000),

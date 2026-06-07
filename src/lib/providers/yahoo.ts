@@ -1,5 +1,7 @@
 import YahooFinance from "yahoo-finance2";
 import type { Market, Sector, Stock } from "@/lib/types";
+import { jpIndustry } from "@/lib/data/industryMap";
+import { JP_UNIVERSE, US_UNIVERSE } from "@/lib/data/universe";
 
 // =============================================================
 // Yahoo Finance プロバイダ(米国株・日本株 両対応・無料・準リアルタイム)
@@ -12,20 +14,6 @@ const yf = new YahooFinance({
   suppressNotices: ["yahooSurvey"],
   validation: { logErrors: false },
 });
-
-// 取得対象ユニバース(無料・準リアルタイム。必要に応じて拡張)。
-const US_UNIVERSE = [
-  "AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA",
-  "JPM", "BAC", "BRK-B", "JNJ", "PFE", "UNH", "XOM", "CVX",
-  "KO", "PG", "HD", "CAT", "BA", "T", "LIN", "NEE", "PLD", "INTC",
-];
-
-const JP_UNIVERSE = [
-  "6758.T", "6861.T", "6098.T", "7203.T", "7267.T", "9983.T",
-  "8306.T", "8316.T", "8766.T", "6501.T", "6981.T", "7011.T",
-  "9984.T", "9432.T", "4502.T", "4503.T", "2914.T", "2502.T",
-  "4063.T", "5401.T", "5020.T", "9501.T", "8801.T",
-];
 
 // Yahoo(英語GICS) → 当アプリのセクター区分
 const SECTOR_MAP: Record<string, Sector> = {
@@ -72,6 +60,7 @@ async function fetchOne(symbol: string, market: Market): Promise<Stock | null> {
 
     const sectorEn = profile?.sector ?? "";
     const sector = SECTOR_MAP[sectorEn] ?? "資本財";
+    const industry = jpIndustry(profile?.industry);
 
     const per = detail?.trailingPE ?? stats?.forwardPE ?? null;
     const pbr = stats?.priceToBook ?? null;
@@ -83,6 +72,7 @@ async function fetchOne(symbol: string, market: Market): Promise<Stock | null> {
       name: price?.longName ?? price?.shortName ?? symbol,
       market,
       sector,
+      industry,
       price: current,
       // regularMarketChangePercent は既にパーセント値(例: 1.82 = +1.82%)
       changePct: round(price?.regularMarketChangePercent ?? 0, 2),
@@ -116,4 +106,42 @@ export async function fetchYahooStocks(market: Market): Promise<Stock[]> {
     results.push(...stocks.filter((s): s is Stock => s !== null));
   }
   return results;
+}
+
+export interface PricePoint {
+  date: string; // YYYY-MM-DD
+  close: number;
+}
+
+export interface StockDetail {
+  stock: Stock | null;
+  history: PricePoint[];
+}
+
+// ティッカーから市場を推定(.T で終われば日本株)。
+export function inferMarket(ticker: string): Market {
+  return ticker.toUpperCase().endsWith(".T") ? "JP" : "US";
+}
+
+// 個別銘柄の詳細(財務指標 + 過去6か月の日足終値)を取得。
+export async function fetchYahooDetail(ticker: string): Promise<StockDetail> {
+  const market = inferMarket(ticker);
+  const stock = await fetchOne(ticker, market);
+
+  let history: PricePoint[] = [];
+  try {
+    const period1 = new Date();
+    period1.setMonth(period1.getMonth() - 6);
+    const chart = await yf.chart(ticker, { period1, interval: "1d" });
+    history = (chart.quotes ?? [])
+      .filter((q) => q.close != null && q.date != null)
+      .map((q) => ({
+        date: new Date(q.date).toISOString().slice(0, 10),
+        close: round(q.close as number, 2),
+      }));
+  } catch (err) {
+    console.error(`[yahoo] ${ticker} チャート取得失敗:`, err);
+  }
+
+  return { stock, history };
 }
